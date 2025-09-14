@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MF Portfolio manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">MF Portfolio</a>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item active" style="margin-left: 200px;">
+                        <a class="nav-link" href="entry.html">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item" style="margin-left: 200px;">
+                        <a class="nav-link" href="portfolio.html">Portfolio manager</a>
+                    </li>
+                    <li class="nav-item" style="margin-left: 200px;">
+                        <a class="nav-link" href="performance.html">Performance manager</a>
+                    </li>
+                </ul>
+                <div class="ml-auto">
+                  <button id="btnLogout" class="btn btn-outline-light btn-sm">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div  class="card card-elevated" id="chartArea">
+        
+
+        <div class="chart-row">
+            <div id="MF_chart" style="flex:1; max-width:1100px; height:500px; display:none;"></div>
+            <div class="chart-buttons">
+                <button class="btn btn-primary chartBTN" id="holdingsbyNameBTN" onclick="drawholdingsbyName()">
+                    Show Current Value by Name
+                </button>
+                <button class="btn btn-primary chartBTN" onclick="drawFundGroupByHolderStacked(false)">
+                    Show Current Value by MF Group
+                </button>
+                <button class="btn btn-primary chartBTN" onclick="drawFundGroupByHolderAndHouse()">
+                    Value by MF Sub-Category
+                </button>
+            </div>
+            
+        </div>
+        
+    </div>
+<div id="statusArea" class="mt-3"></div>
+
+
+
+
+
+
+
+
+
+
+    <!-- 1) Full jQuery (NOT slim) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <!-- 2) Popper (Bootstrap 4 dependency) -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+
+    <!-- 3) Bootstrap JS (requires jQuery + Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 4) Select2 JS (only if this page uses #mfDropdown somewhere) -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- 5) Supabase JS v2 (must be before your script.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- 6) Plotly (pin a modern version) -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+</body>
+
+    <!-- 7) Your app code LAST -->
+    <script src="script.js"></script>
+    <script>
+      const sbClient = supabase.createClient(
+        'https://sipdpipypzytffciqfvq.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpcGRwaXB5cHp5dGZmY2lxZnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NDQ5MTAsImV4cCI6MjA3MDQyMDkxMH0.ruip7VfwgPhG4saY2U_5J-CtQJSl3I4_qelHZxTp44I'
+      );
+
+      document.getElementById('btnLogout')?.addEventListener('click', async () => {
+        await sbClient.auth.signOut();
+        window.location.href = 'index.html';
+      });
+    </script>
+</body>
+
+</html>

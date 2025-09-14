@@ -1,0 +1,116 @@
+
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MF Portfolio — Sign in</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: white; color: black; }
+    .auth-card { max-width: 420px; margin: 8vh auto; }
+    .auth-card .card { background:white; border:1px solid #262626; }
+    .form-control, .btn { border-radius: 8px; }
+    .logo { font-weight: 700; letter-spacing: .3px; }
+    .muted { color:#9aa0a6; }
+  </style>
+</head>
+<body>
+  <div class="container auth-card">
+    <div class="text-center mb-4 logo">Mutual Fund Portfolio</div>
+    <div class="card ">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3">Sign in</h1>
+        <div id="authStatus" class="mb-3 small muted"></div>
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input id="authEmail" type="email" class="form-control" autocomplete="email" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input id="authPassword" type="password" class="form-control" autocomplete="current-password" required />
+        </div>
+
+        <div class="d-grid gap-2">
+          <button id="btnSignIn" class="btn btn-primary">Sign in</button>
+          <button id="btnSignUp" class="btn btn-outline-dark">Create account</button>
+        </div>
+
+        <div class="d-flex justify-content-between mt-3">
+          <button id="btnReset" class="btn btn-link p-0">Forgot password?</button>
+          <span class="small muted">You agree to the terms by continuing.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // === Supabase init ===
+    const SUPABASE_URL = 'https://sipdpipypzytffciqfvq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpcGRwaXB5cHp5dGZmY2lxZnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NDQ5MTAsImV4cCI6MjA3MDQyMDkxMH0.ruip7VfwgPhG4saY2U_5J-CtQJSl3I4_qelHZxTp44I';
+    const sbAuth = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const statusEl = document.getElementById('authStatus');
+    function setStatus(msg) { statusEl.textContent = msg || ''; }
+
+    // If already logged in, go straight to app
+    (async function redirectIfLoggedIn() {
+      const { data: { session } } = await sbAuth.auth.getSession();
+      if (session) {
+        window.location.href = 'entry.html'; // change if your main page is different
+      }
+    })();
+
+    // Sign in
+    document.getElementById('btnSignIn').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if (!email || !password) { setStatus('Please enter email and password.'); return; }
+      try {
+        setStatus('Signing in…');
+        const { error } = await sbAuth.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        setStatus('Signed in. Redirecting…');
+        window.location.href = 'entry.html';
+      } catch (e) {
+        setStatus('Sign in failed: ' + (e.message || e));
+      }
+    });
+
+    // Sign up (email + password)
+    document.getElementById('btnSignUp').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if (!email || !password) { setStatus('Please enter email and password.'); return; }
+      try {
+        setStatus('Creating account…');
+        const { error } = await sbAuth.auth.signUp({ email, password });
+        if (error) throw error;
+        setStatus('Account created. If email confirmation is enabled, check your inbox. Then sign in.');
+      } catch (e) {
+        setStatus('Sign up failed: ' + (e.message || e));
+      }
+    });
+
+    // Password reset magic link
+    document.getElementById('btnReset').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      if (!email) { setStatus('Enter your email above first.'); return; }
+      try {
+        setStatus('Sending reset email…');
+        const { error } = await sbAuth.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/index.html'
+        });
+        if (error) throw error;
+        setStatus('Reset email sent. Check your inbox.');
+      } catch (e) {
+        setStatus('Reset failed: ' + (e.message || e));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+header {
+    background-color: #343a40;
+    color: #ddd;
+}
+
+a{
+    font-weight: bold;
+    font-size: large;
+    color: white;
+}
+
+div{
+    padding: 20px;
+}
+button{
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+input{
+    width: 20%;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 1rem;
+    height: 40px;
+    color: #999;
+}
+
+#transactionType{
+    width: 25%!important;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 1rem;
+    height: 40px;
+    color: #999;
+}
+
+#mfDropdown, select{
+    width: 40% !important;
+    margin: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 1rem;
+    height: 40px;
+    color: #999;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 40px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background-color: white;
+    
+}
+
+.select2-selection__rendered {
+    line-height: 36px;
+    padding-left: 2px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.select2-selection__placeholder {
+    color: #999;
+}
+
+
+.chart-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.chart-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#performanceTable th, #performanceTable td {
+    border: solid 2px black;
+    padding: 8px;
+    text-align: left;
+    color: #ddd;
+    
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    padding-top: 20px;
+}
+
+.plotly-scroll-x {
+  width: 100%;
+  overflow-x: auto;   /* allow horizontal scrolling */
+  overflow-y: visible; /* let it grow vertically */
+  padding: 10px;
+}
+
+#performanceTableDiv {
+  overflow: visible;   /* table grows vertically */
+  display: inline-block; /* allow it to stretch wider than parent */
+}
+
+.chartBTN{
+    width : 270px;
+}
+
+/* --- Shared page/card look to match Home/Portfolio --- */
+.card-elevated {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+.card-elevated .card-header {
+  background: #f8f9fa;
+  color: #111;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.card-elevated .card-body {
+  background: #ffffff;
+}
+
+/* Table container: horizontal scroll inside white card, grows vertically */
+.plotly-scroll-x {
+  width: 100%;
+  overflow-x: auto;   /* horizontal scroll inside card */
+  overflow-y: visible;/* grow vertically, no inner vertical scroll */
+}
+.plotly-table-surface {
+  min-width: 600px;
+  display: inline-block; /* allow width wider than parent for X-scroll */
+}
