@@ -241,12 +241,16 @@ async function addEntry(evt) {
     const unitsRaw = document.getElementById('unitsBought').value;
     const buyPriceRaw = document.getElementById('buyingPrice').value;
     const tradeDateRaw = document.getElementById('transactionDate').value;
+    const investmentApp = document.getElementById('investmentApp').value;
 
     // Basic validation
     if (!holderName) throw new Error('Please enter holder name.');
     if (!schemeCode) throw new Error('Please select a mutual fund.');
     if (!transactionType || !['buy', 'sell', 'BUY', 'SELL'].includes(transactionType)) {
       throw new Error('Please choose BUY or SELL.');
+    }
+    if(!investmentApp || !['direct', 'amit', 'rkb', 'fisdom'].includes(investmentApp)){
+      throw new Error('Please choose where you invested from.');
     }
     if (!unitsRaw) throw new Error('Please enter units.');
     if (!buyPriceRaw) throw new Error('Please enter buying price.');
@@ -317,7 +321,8 @@ async function addEntry(evt) {
       nav_date: navDate,
       fund_house: fundHouse,
       fund_category: fundCategory,
-      fund_sub_category: fundSubCategory
+      fund_sub_category: fundSubCategory,
+      investment_app: investmentApp
     };
 
     console.log('Payload to insert:', payload);
@@ -337,6 +342,7 @@ async function addEntry(evt) {
     document.getElementById('holderName').value = '';
     $('#mfDropdown').val(null).trigger('change'); // reset Select2
     document.getElementById('transactionType').value = '';
+    document.getElementById('investmentApp').value = '';
     document.getElementById('unitsBought').value = '';
     document.getElementById('buyingPrice').value = '';
     document.getElementById('transactionDate').value = '';

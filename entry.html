@@ -64,6 +64,13 @@
                 <option value="sell">SELL</option>
             </select>
             <input type="date" id="transactionDate" placeholder="DD/MM/YYYY">
+            <select type="text" id="investmentApp">
+                <option>Where did you invest in this fund from?</option>
+                <option value="direct">Direct</option>
+                <option value="amit">Amit</option>
+                <option value="rkb">RKB</option>
+                <option value="fisdom">Fisdom</option>
+            </select>
             <button id="addEntry">Add Entry</button>
             
         </div>
@@ -81,7 +88,13 @@
             <input type="date" id="sipStartDate" placeholder="SIP start date" title="SIP start date (first deduction)">
             <input type="number" id="sipMonths" min="1" step="1" placeholder="Number of months" title="How many months this SIP should run">
             <input type="number" id="sipAmountPerMonth" min="1" step="0.01" placeholder="Amount deposited every month (₹)" title="Monthly SIP amount in INR">
-
+            <select type="text" id="sipInvestmentApp">
+                <option>Where did you invest in this fund from?</option>
+                <option value="direct">Direct</option>
+                <option value="amit">Amit</option>
+                <option value="rkb">RKB</option>
+                <option value="fisdom">Fisdom</option>
+            </select>
             <!-- Action -->
             <button id="addSipPlan">Add SIP Plan</button>
         </div>

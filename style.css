@@ -35,7 +35,7 @@ input{
     color: #999;
 }
 
-#transactionType{
+#transactionType,#investmentApp, #sipInvestmentApp{
     width: 25%!important;
     padding: 10px;
     margin: 10px;
