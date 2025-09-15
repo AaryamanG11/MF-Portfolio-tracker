@@ -412,8 +412,9 @@ async function handleAddSipPlan(evt) {
   const startISO = document.getElementById('sipStartDate').value;
   const months = parseInt(document.getElementById('sipMonths').value, 10);
   const amount = parseFloat(document.getElementById('sipAmountPerMonth').value);
+  const sipInvestmentApp = document.getElementById('sipInvestmentApp').value;
 
-  if (!holder || !scheme_code || !scheme_name || !startISO || !months || !amount) {
+  if (!holder || !scheme_code || !scheme_name || !startISO || !months || !amount || !sipInvestmentApp) {
     status.textContent = 'Please fill all SIP fields.';
     return;
   }
@@ -426,7 +427,10 @@ async function handleAddSipPlan(evt) {
     status.textContent = 'Amount must be a positive number.';
     return;
   }
-
+  if(!['direct', 'amit', 'rkb', 'fisdom'].includes(sipInvestmentApp)){
+    status.textContent = 'Please choose where you invested from.';
+    return;
+  }
   // Auto-fill fund meta (fund_house, fund_category, fund_sub_category) from mfapi.in
   let fund_house = null, fund_category = null, fund_sub_category = null;
   try {
@@ -451,6 +455,7 @@ async function handleAddSipPlan(evt) {
       scheme_name,
       scheduled_for: addMonthsClamp(startISO, i),
       monthly_amount: amount,
+      investment_app: sipInvestmentApp,
       fund_house,
       fund_category,
       fund_sub_category
@@ -466,6 +471,7 @@ async function handleAddSipPlan(evt) {
     document.getElementById('sipStartDate').value = '';
     document.getElementById('sipMonths').value = '';
     document.getElementById('sipAmountPerMonth').value = '';
+    document.getElementById('sipInvestmentApp').value = '';
   } catch (e) {
     console.error(e);
     status.textContent = 'Failed to add SIP plan: ' + (e.message || e);
