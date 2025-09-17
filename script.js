@@ -10,25 +10,25 @@ function normalizeDateString(s) {
   // already ISO: 2025-08-10
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
 
-  // DD-MM-YYYY or DD/MM/YYYY -> 29-05-2008
+  // DD-MM-YYYY or DD/MM/YYYY
   let m = str.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
   if (m) {
     const [, dd, mm, yyyy] = m;
     return `${yyyy}-${mm}-${dd}`;
-    m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
-    if (m) {
-      const months = {
-        Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
-        Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12'
-      };
-      const [, dd, mon, yyyy] = m;
-      const mm = months[mon.slice(0, 3)];
-      if (mm) return `${yyyy}-${mm}-${dd}`;
-    }
-
-    // Fallback: return original (DB will reject if invalid)
-    return str;
   }
+
+  // DD-Mon-YYYY (e.g., 29-May-2008)
+  m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+  if (m) {
+    const months = { Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06',
+                     Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12' };
+    const [, dd, mon, yyyy] = m;
+    const mm = months[mon.slice(0,3)];
+    if (mm) return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Fallback: return original
+  return str;
 }
 
 // Get visible text of selected <option>
@@ -136,6 +136,13 @@ $(document).ready(function () {
   // Initialize both dropdowns if present on the page
   initFundSelect('#mfDropdown', '40%');
   initFundSelect('#sipMfDropdown', '40%');
+
+  // ✅ Initialize holder name dropdowns (Select2)
+  $('#holderName, #sipHolderName').select2({
+    placeholder: 'Select Holder',
+    allowClear: true,
+    width: '20%'
+  });
 });
 
 
@@ -249,7 +256,7 @@ async function addEntry(evt) {
     if (!transactionType || !['buy', 'sell', 'BUY', 'SELL'].includes(transactionType)) {
       throw new Error('Please choose BUY or SELL.');
     }
-    if(!investmentApp || !['direct', 'amit', 'rkb', 'fisdom'].includes(investmentApp)){
+    if (!investmentApp || !['direct', 'amit', 'rkb', 'fisdom'].includes(investmentApp)) {
       throw new Error('Please choose where you invested from.');
     }
     if (!unitsRaw) throw new Error('Please enter units.');
@@ -339,8 +346,8 @@ async function addEntry(evt) {
     uiStatus('Refreshing NAVs… done ✅', 'success');
 
     // Reset form fields
-    document.getElementById('holderName').value = '';
-    $('#mfDropdown').val(null).trigger('change'); // reset Select2
+    $('#holderName').val(null).trigger('change'); // ✅ reset holder dropdown
+    $('#mfDropdown').val(null).trigger('change'); // reset fund dropdown
     document.getElementById('transactionType').value = '';
     document.getElementById('investmentApp').value = '';
     document.getElementById('unitsBought').value = '';
@@ -427,7 +434,7 @@ async function handleAddSipPlan(evt) {
     status.textContent = 'Amount must be a positive number.';
     return;
   }
-  if(!['direct', 'amit', 'rkb', 'fisdom'].includes(sipInvestmentApp)){
+  if (!['direct', 'amit', 'rkb', 'fisdom'].includes(sipInvestmentApp)) {
     status.textContent = 'Please choose where you invested from.';
     return;
   }
@@ -466,7 +473,7 @@ async function handleAddSipPlan(evt) {
     const { data, error } = await sb.from('sip_queue').insert(rows).select('id, scheduled_for');
     if (error) throw error;
     status.textContent = `SIP plan added: ${data.length} month(s) scheduled.`;
-    document.getElementById('sipHolderName').value = '';
+    $('#sipHolderName').val(null).trigger('change'); // ✅ reset holder dropdown
     $('#sipMfDropdown').val(null).trigger('change');
     document.getElementById('sipStartDate').value = '';
     document.getElementById('sipMonths').value = '';
