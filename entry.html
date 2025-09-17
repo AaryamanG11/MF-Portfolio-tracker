@@ -52,8 +52,16 @@
         <h1>Welcome to the Mutual Fund Portfolio Tracker</h1>
         <p>This is where you can add an Mutual Fund entry to your database</p>
         <div>
+            <input type="text" id="folioNumber" placeholder="Folio Number">
             <select id="holderName">
                 <option value="">Select Holder</option>
+                <option value="Ankit">Ankit</option>
+                <option value="Avdhi">Avdhi</option>
+                <option value="SCG">SCG</option>
+                <option value="Suman">Suman</option>
+            </select>
+            <select id="nomineeName">
+                <option value="">Select Nominee</option>
                 <option value="Ankit">Ankit</option>
                 <option value="Avdhi">Avdhi</option>
                 <option value="SCG">SCG</option>
@@ -75,6 +83,8 @@
                 <option value="rkb">RKB</option>
                 <option value="fisdom">Fisdom</option>
             </select>
+            <input type="text" id="bankName" placeholder="Bank Name">
+
             <button id="addEntry">Add Entry</button>
 
         </div>
@@ -85,6 +95,7 @@
         <p>Add an SIP that will auto-schedule monthly investments into your database.</p>
         <div>
             <!-- Reuse same holder and scheme selector for consistency -->
+            <input type="text" id="sipFolioNumber" placeholder="Folio Number">
             <select id="sipHolderName">
                 <option value="">Select Holder</option>
                 <option value="Ankit">Ankit</option>
@@ -92,6 +103,14 @@
                 <option value="SCG">SCG</option>
                 <option value="Suman">Suman</option>
             </select> <select id="sipMfDropdown"></select>
+            <select id="sipNomineeName">
+                <option value="">Select Nominee</option>
+                <option value="Ankit">Ankit</option>
+                <option value="Avdhi">Avdhi</option>
+                <option value="SCG">SCG</option>
+                <option value="Suman">Suman</option>
+            </select>   
+
 
             <!-- SIP-specific inputs -->
             <input type="date" id="sipStartDate" placeholder="SIP start date" title="SIP start date (first deduction)">
@@ -106,6 +125,9 @@
                 <option value="rkb">RKB</option>
                 <option value="fisdom">Fisdom</option>
             </select>
+
+            <input type="text" id="sipBankName" placeholder="Bank Name">
+            
             <!-- Action -->
             <button id="addSipPlan">Add SIP Plan</button>
         </div>

@@ -244,6 +244,9 @@ async function addEntry(evt) {
     const mfSelect = document.getElementById('mfDropdown');
     const schemeCode = mfSelect.value;
     const schemeName = getSelectedText(mfSelect);
+    const folioNumber = document.getElementById('folioNumber').value.trim();
+    const bankName = document.getElementById('bankName').value.trim();
+    const nomineeName = document.getElementById('nomineeName').value.trim();
     const transactionType = document.getElementById('transactionType').value;
     const unitsRaw = document.getElementById('unitsBought').value;
     const buyPriceRaw = document.getElementById('buyingPrice').value;
@@ -329,7 +332,10 @@ async function addEntry(evt) {
       fund_house: fundHouse,
       fund_category: fundCategory,
       fund_sub_category: fundSubCategory,
-      investment_app: investmentApp
+      investment_app: investmentApp,
+      nominee_name: nomineeName || null,
+      bank_name: bankName || null,
+      folio_number: folioNumber || null
     };
 
     console.log('Payload to insert:', payload);
@@ -350,6 +356,9 @@ async function addEntry(evt) {
     $('#mfDropdown').val(null).trigger('change'); // reset fund dropdown
     document.getElementById('transactionType').value = '';
     document.getElementById('investmentApp').value = '';
+    document.getElementById('bankName').value = '';
+    document.getElementById('nomineeName').value = '';
+    document.getElementById('folioNumber').value = '';  
     document.getElementById('unitsBought').value = '';
     document.getElementById('buyingPrice').value = '';
     document.getElementById('transactionDate').value = '';
@@ -415,11 +424,15 @@ async function handleAddSipPlan(evt) {
   const mfSel = document.getElementById('sipMfDropdown');
   const scheme_code = mfSel.value;
   const scheme_name = getSelectedText(mfSel);
+  const sipFolioNumber = document.getElementById('sipFolioNumber').value.trim();
+  const sipBankName = document.getElementById('sipBankName').value.trim();
+  const sipNomineeName = document.getElementById('sipNomineeName').value.trim();
 
   const startISO = document.getElementById('sipStartDate').value;
   const months = parseInt(document.getElementById('sipMonths').value, 10);
   const amount = parseFloat(document.getElementById('sipAmountPerMonth').value);
   const sipInvestmentApp = document.getElementById('sipInvestmentApp').value;
+
 
   if (!holder || !scheme_code || !scheme_name || !startISO || !months || !amount || !sipInvestmentApp) {
     status.textContent = 'Please fill all SIP fields.';
@@ -465,7 +478,11 @@ async function handleAddSipPlan(evt) {
       investment_app: sipInvestmentApp,
       fund_house,
       fund_category,
-      fund_sub_category
+      fund_sub_category,
+      nominee_name: sipNomineeName || null,
+      bank_name: sipBankName || null,
+      folio_number: sipFolioNumber || null
+
     });
   }
 
@@ -479,6 +496,9 @@ async function handleAddSipPlan(evt) {
     document.getElementById('sipMonths').value = '';
     document.getElementById('sipAmountPerMonth').value = '';
     document.getElementById('sipInvestmentApp').value = '';
+    document.getElementById('sipBankName').value = '';
+    document.getElementById('sipNomineeName').value = '';
+    document.getElementById('sipFolioNumber').value = '';
   } catch (e) {
     console.error(e);
     status.textContent = 'Failed to add SIP plan: ' + (e.message || e);
