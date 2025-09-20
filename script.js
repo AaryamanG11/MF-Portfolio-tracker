@@ -249,7 +249,7 @@ async function addEntry(evt) {
     const nomineeName = document.getElementById('nomineeName').value.trim();
     const transactionType = document.getElementById('transactionType').value;
     const unitsRaw = document.getElementById('unitsBought').value;
-    const buyPriceRaw = document.getElementById('buyingPrice').value;
+    const buyValueRaw = document.getElementById('buyingValue').value;
     const tradeDateRaw = document.getElementById('transactionDate').value;
     const investmentApp = document.getElementById('investmentApp').value;
 
@@ -263,12 +263,12 @@ async function addEntry(evt) {
       throw new Error('Please choose where you invested from.');
     }
     if (!unitsRaw) throw new Error('Please enter units.');
-    if (!buyPriceRaw) throw new Error('Please enter buying price.');
+    if (!buyValueRaw) throw new Error('Please enter buying value.');
     if (!tradeDateRaw) throw new Error('Please select the trade date.');
 
-    let units = parseFloat(unitsRaw); const buyPrice = parseFloat(buyPriceRaw);
+    let units = parseFloat(unitsRaw); const buyValue = parseFloat(buyValueRaw);
     if (!isFinite(units) || units < 0) throw new Error('Units must be a non-negative number.');
-    if (!isFinite(buyPrice) || buyPrice < 0) throw new Error('Buying price must be a non-negative number.');
+    if (!isFinite(buyValue) || buyValue < 0) throw new Error('Buying value must be a non-negative number.');
 
     // Change units based on transaction type
     if (transactionType.toLowerCase() === 'sell') {
@@ -313,7 +313,7 @@ async function addEntry(evt) {
 
 
     // Calculated fields
-    const buyValue = units * buyPrice;
+    const buyPrice = buyValue / units; // price per unit
     const currentValue = (currentNav != null && isFinite(currentNav)) ? currentNav * units : null;
 
     // Build payload (DB column names)
@@ -360,7 +360,7 @@ async function addEntry(evt) {
     document.getElementById('nomineeName').value = '';
     document.getElementById('folioNumber').value = '';  
     document.getElementById('unitsBought').value = '';
-    document.getElementById('buyingPrice').value = '';
+    document.getElementById('buyingValue').value = '';
     document.getElementById('transactionDate').value = '';
     // Put cursor back on first field for fast entry
     document.getElementById('holderName').focus();
