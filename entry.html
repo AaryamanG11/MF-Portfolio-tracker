@@ -113,7 +113,18 @@
 
 
             <!-- SIP-specific inputs -->
+            <hr>
+             <label for="sipStartDate">SIP start date</label>
             <input type="date" id="sipStartDate" placeholder="SIP start date" title="SIP start date (first deduction)">
+            <input type="number" id="sipInitialAmount" min="1" step="0.01"
+                placeholder="Initial lump sum amount (₹)" title="Initial lump sum amount in INR">
+            <input type="number" id="sipInitialUnits" min="0.0001" step="0.0001"
+                placeholder="Initial units bought" title="Number of units bought in initial lump sum">
+            <hr>
+            <label for="sipMontlydate">SIP monthly date</label>
+            <br>
+            <input type="date" id="sipMontlydate" placeholder="SIP monthly date"
+                title="Day of month when SIP should next be detucted">
             <input type="number" id="sipMonths" min="1" step="1" placeholder="Number of months"
                 title="How many months this SIP should run">
             <input type="number" id="sipAmountPerMonth" min="1" step="0.01"

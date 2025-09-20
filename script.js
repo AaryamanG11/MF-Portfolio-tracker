@@ -428,17 +428,24 @@ async function handleAddSipPlan(evt) {
   const sipBankName = document.getElementById('sipBankName').value.trim();
   const sipNomineeName = document.getElementById('sipNomineeName').value.trim();
 
-  const startISO = document.getElementById('sipStartDate').value;
+  // Dates & numbers
+  const startISO = document.getElementById('sipStartDate').value;       // initial deduction date (lump sum)
+  const monthlyISO = document.getElementById('sipMonthlyDate').value;   // recurring SIP monthly date (1st cycle after start)
   const months = parseInt(document.getElementById('sipMonths').value, 10);
   const amount = parseFloat(document.getElementById('sipAmountPerMonth').value);
   const sipInvestmentApp = document.getElementById('sipInvestmentApp').value;
 
+  // New: optional initial lump-sum/first-buy details for the start date
+  const initAmountStr = document.getElementById('sipInitialAmount') ? document.getElementById('sipInitialAmount').value : '';
+  const initUnitsStr  = document.getElementById('sipInitialUnits') ? document.getElementById('sipInitialUnits').value : '';
+  const initAmount = initAmountStr ? parseFloat(initAmountStr) : NaN;
+  const initUnits  = initUnitsStr ? parseFloat(initUnitsStr) : NaN;
 
-  if (!holder || !scheme_code || !scheme_name || !startISO || !months || !amount || !sipInvestmentApp) {
-    status.textContent = 'Please fill all SIP fields.';
+  // ---- Basic validation
+  if (!holder || !scheme_code || !scheme_name || !startISO || !monthlyISO || !months || !amount || !sipInvestmentApp) {
+    status.textContent = 'Please fill all SIP fields (holder, fund, start date, monthly date, months, amount, invested from).';
     return;
   }
-
   if (months <= 0 || !Number.isFinite(months)) {
     status.textContent = 'Months must be a positive number.';
     return;
@@ -451,7 +458,8 @@ async function handleAddSipPlan(evt) {
     status.textContent = 'Please choose where you invested from.';
     return;
   }
-  // Auto-fill fund meta (fund_house, fund_category, fund_sub_category) from mfapi.in
+
+  // ---- Fund meta (house/category/sub-category)
   let fund_house = null, fund_category = null, fund_sub_category = null;
   try {
     const res = await fetch(`https://api.mfapi.in/mf/${scheme_code}`);
@@ -466,39 +474,87 @@ async function handleAddSipPlan(evt) {
     console.warn('[SIP] Could not fetch fund meta for code', scheme_code, e);
   }
 
-  // Build rows
-  const rows = [];
-  for (let i = 0; i < months; i++) {
-    rows.push({
-      holder_name: holder,
-      scheme_code,
-      scheme_name,
-      scheduled_for: addMonthsClamp(startISO, i),
-      monthly_amount: amount,
-      investment_app: sipInvestmentApp,
-      fund_house,
-      fund_category,
-      fund_sub_category,
-      nominee_name: sipNomineeName || null,
-      bank_name: sipBankName || null,
-      folio_number: sipFolioNumber || null
-
-    });
-  }
-
   try {
+    // 1) If initial details provided, insert an initial BUY into portfolio on startISO
+    //    (only if BOTH amount and units are valid numbers)
+    if (Number.isFinite(initAmount) && initAmount > 0 && Number.isFinite(initUnits) && initUnits > 0) {
+      // Fetch latest NAV just to seed current value (your refreshAllNAVs will update later anyway)
+      let current_nav = null, nav_date = null;
+      try {
+        const navRes = await fetch(`https://api.mfapi.in/mf/${scheme_code}`);
+        const navJson = await navRes.json();
+        if (navJson?.data?.[0]) {
+          current_nav = parseFloat(navJson.data[0].nav);
+          nav_date = normalizeDateString(navJson.data[0].date);
+        }
+      } catch (e) {
+        console.warn('[SIP] Initial NAV seed fetch failed:', e);
+      }
+
+      const initialPayload = {
+        holder_name: holder,
+        scheme_code,
+        scheme_name,
+        transaction_type: 'buy',
+        is_sip: true,
+        units: initUnits,
+        buy_price: initAmount / initUnits,
+        buy_value: initAmount,
+        current_nav: Number.isFinite(current_nav) ? current_nav : null,
+        current_value: (Number.isFinite(current_nav) ? current_nav * initUnits : null),
+        nav_date: nav_date,
+        trade_date: startISO,
+        fund_house,
+        fund_category,
+        fund_sub_category,
+        investment_app: sipInvestmentApp,
+        nominee_name: sipNomineeName || null,
+        bank_name: sipBankName || null,
+        folio_number: sipFolioNumber || null,
+        first_sip_date: startISO,
+        last_sip_date: startISO
+      };
+
+      const { error: initErr } = await sb.from('portfolio').insert([initialPayload]);
+      if (initErr) throw initErr;
+    }
+
+    // 2) Build & insert SIP queue rows starting from monthlyISO for N months
+    const rows = [];
+    for (let i = 0; i < months; i++) {
+      rows.push({
+        holder_name: holder,
+        scheme_code,
+        scheme_name,
+        scheduled_for: addMonthsClamp(monthlyISO, i),
+        monthly_amount: amount,
+        investment_app: sipInvestmentApp,
+        fund_house,
+        fund_category,
+        fund_sub_category,
+        nominee_name: sipNomineeName || null,
+        bank_name: sipBankName || null,
+        folio_number: sipFolioNumber || null
+      });
+    }
+
     const { data, error } = await sb.from('sip_queue').insert(rows).select('id, scheduled_for');
     if (error) throw error;
-    status.textContent = `SIP plan added: ${data.length} month(s) scheduled.`;
-    $('#sipHolderName').val(null).trigger('change'); // ✅ reset holder dropdown
+
+    status.textContent = `SIP plan added: ${data.length} month(s) scheduled.` + (Number.isFinite(initAmount) && Number.isFinite(initUnits) && initAmount > 0 && initUnits > 0 ? ' Initial purchase recorded.' : '');
+    // Reset fields
+    $('#sipHolderName').val(null).trigger('change');
     $('#sipMfDropdown').val(null).trigger('change');
     document.getElementById('sipStartDate').value = '';
+    document.getElementById('sipMonthlyDate').value = '';
     document.getElementById('sipMonths').value = '';
     document.getElementById('sipAmountPerMonth').value = '';
     document.getElementById('sipInvestmentApp').value = '';
     document.getElementById('sipBankName').value = '';
     document.getElementById('sipNomineeName').value = '';
     document.getElementById('sipFolioNumber').value = '';
+    if (document.getElementById('sipInitialAmount')) document.getElementById('sipInitialAmount').value = '';
+    if (document.getElementById('sipInitialUnits')) document.getElementById('sipInitialUnits').value = '';
   } catch (e) {
     console.error(e);
     status.textContent = 'Failed to add SIP plan: ' + (e.message || e);
