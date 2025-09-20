@@ -20,16 +20,19 @@ function normalizeDateString(s) {
   // DD-Mon-YYYY (e.g., 29-May-2008)
   m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
   if (m) {
-    const months = { Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06',
-                     Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12' };
-    const [, dd, mon, yyyy] = m;
-    const mm = months[mon.slice(0,3)];
-    if (mm) return `${yyyy}-${mm}-${dd}`;
-  }
+    // DD-Mon-YYYY (e.g., 29-May-2008)
+m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+if (m) {
+  const months = { Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06',
+                   Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12' };
+  const [, dd, mon, yyyy] = m;
+  const mm = months[mon.slice(0,3)];
+  if (mm) return `${yyyy}-${mm}-${dd}`;
+}
 
   // Fallback: return original
   return str;
-}
+}}
 
 // Get visible text of selected <option>
 function getSelectedText(sel) {
@@ -358,7 +361,7 @@ async function addEntry(evt) {
     document.getElementById('investmentApp').value = '';
     document.getElementById('bankName').value = '';
     document.getElementById('nomineeName').value = '';
-    document.getElementById('folioNumber').value = '';  
+    document.getElementById('folioNumber').value = '';
     document.getElementById('unitsBought').value = '';
     document.getElementById('buyingValue').value = '';
     document.getElementById('transactionDate').value = '';
@@ -414,36 +417,67 @@ function addMonthsClamp(isoDate, n) {
   const clamped = Math.min(day, lastOfTarget.getDate());
   return new Date(d.getFullYear(), targetMonth, clamped).toISOString().slice(0, 10);
 }
+// put this helper once above valReq / valOpt
+function valReqAny(ids) {
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el) return (el.value ?? '').trim();
+  }
+  throw new Error('Missing field on page: ' + ids.map(id => '#' + id).join(' or '));
+}
+
+// Safe DOM value readers (give clear errors if a required field is missing)
+function valReq(id) {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Missing field on page: #${id}`);
+  return (el.value ?? '').trim();
+}
+function valOpt(id) {
+  const el = document.getElementById(id);
+  return el ? (el.value ?? '').trim() : '';
+}
 
 async function handleAddSipPlan(evt) {
   evt && evt.preventDefault();
   const status = document.getElementById('statusArea');
   status.textContent = 'Adding SIP plan…';
 
-  const holder = document.getElementById('sipHolderName').value.trim();
+  const holder = valReq('sipHolderName');
   const mfSel = document.getElementById('sipMfDropdown');
-  const scheme_code = mfSel.value;
+  if (!mfSel) throw new Error('Missing field on page: #sipMfDropdown');
+  const scheme_code = (mfSel.value || '').trim();
   const scheme_name = getSelectedText(mfSel);
-  const sipFolioNumber = document.getElementById('sipFolioNumber').value.trim();
-  const sipBankName = document.getElementById('sipBankName').value.trim();
-  const sipNomineeName = document.getElementById('sipNomineeName').value.trim();
+  const sipFolioNumber = valOpt('sipFolioNumber');
+  const sipBankName = valOpt('sipBankName');
+  const sipNomineeName = valOpt('sipNomineeName');
 
   // Dates & numbers
-  const startISO = document.getElementById('sipStartDate').value;       // initial deduction date (lump sum)
-  const monthlyISO = document.getElementById('sipMonthlyDate').value;   // recurring SIP monthly date (1st cycle after start)
-  const months = parseInt(document.getElementById('sipMonths').value, 10);
-  const amount = parseFloat(document.getElementById('sipAmountPerMonth').value);
-  const sipInvestmentApp = document.getElementById('sipInvestmentApp').value;
+  const startISO = valReq('sipStartDate');         // initial deduction date (lump sum)
+  // Accept either the intended id or the current HTML id
+  const monthlyISO = valReqAny(['sipMonthlyDate', 'sipMontlydate']);
+  const monthsStr = valReq('sipMonths');
+  const amountStr = valReq('sipAmountPerMonth');
+  const months = parseInt(monthsStr, 10);
+  const amount = parseFloat(amountStr);
+  const sipInvestmentApp = valReq('sipInvestmentApp');
 
   // New: optional initial lump-sum/first-buy details for the start date
-  const initAmountStr = document.getElementById('sipInitialAmount') ? document.getElementById('sipInitialAmount').value : '';
-  const initUnitsStr  = document.getElementById('sipInitialUnits') ? document.getElementById('sipInitialUnits').value : '';
+  const initAmountStr = valOpt('sipInitialAmount');
+  const initUnitsStr = valOpt('sipInitialUnits');
   const initAmount = initAmountStr ? parseFloat(initAmountStr) : NaN;
-  const initUnits  = initUnitsStr ? parseFloat(initUnitsStr) : NaN;
+  const initUnits = initUnitsStr ? parseFloat(initUnitsStr) : NaN;
 
   // ---- Basic validation
-  if (!holder || !scheme_code || !scheme_name || !startISO || !monthlyISO || !months || !amount || !sipInvestmentApp) {
-    status.textContent = 'Please fill all SIP fields (holder, fund, start date, monthly date, months, amount, invested from).';
+  if (!monthsStr || !amountStr || !monthlyISO) {
+    status.textContent = 'Please enter monthly date, months, and monthly amount.';
+    return;
+  }
+  if (!scheme_code || !scheme_name) {
+    status.textContent = 'Please select a mutual fund.';
+    return;
+  }
+  if (!monthsStr || !amountStr) {
+    status.textContent = 'Please enter months and monthly amount.';
     return;
   }
   if (months <= 0 || !Number.isFinite(months)) {
@@ -546,7 +580,8 @@ async function handleAddSipPlan(evt) {
     $('#sipHolderName').val(null).trigger('change');
     $('#sipMfDropdown').val(null).trigger('change');
     document.getElementById('sipStartDate').value = '';
-    document.getElementById('sipMonthlyDate').value = '';
+    if (document.getElementById('sipMonthlyDate')) document.getElementById('sipMonthlyDate').value = '';
+    if (document.getElementById('sipMontlydate')) document.getElementById('sipMontlydate').value = '';
     document.getElementById('sipMonths').value = '';
     document.getElementById('sipAmountPerMonth').value = '';
     document.getElementById('sipInvestmentApp').value = '';
@@ -557,7 +592,10 @@ async function handleAddSipPlan(evt) {
     if (document.getElementById('sipInitialUnits')) document.getElementById('sipInitialUnits').value = '';
   } catch (e) {
     console.error(e);
-    status.textContent = 'Failed to add SIP plan: ' + (e.message || e);
+    const msg = String(e?.message || e);
+    status.textContent = msg.startsWith('Missing field on page')
+      ? msg + '. Please open the SIP form page and try again.'
+      : 'Failed to add SIP plan: ' + msg;
   }
 }
 
