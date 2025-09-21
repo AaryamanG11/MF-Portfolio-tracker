@@ -408,15 +408,25 @@ async function addEntry(evt) {
 //                                         SIP input form handling
 // ----------------------------------------------------------------------------------------------------------------------------
 
-// Helper: clamp to last day of month when adding months
-function addMonthsClamp(isoDate, n) {
-  const d = new Date(isoDate + 'T00:00:00');
-  const day = d.getDate();
-  const targetMonth = d.getMonth() + n;
-  const lastOfTarget = new Date(d.getFullYear(), targetMonth + 1, 0);
-  const clamped = Math.min(day, lastOfTarget.getDate());
-  return new Date(d.getFullYear(), targetMonth, clamped).toISOString().slice(0, 10);
+function toISODateLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
+
+// Clamp to last day of month when adding months (safe local time)
+function addMonthsClamp(isoDate, n) {
+  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+
+  const targetMonth = start.getMonth() + n;
+  const lastOfTarget = new Date(start.getFullYear(), targetMonth + 1, 0, 0, 0, 0, 0);
+  const clampedDay = Math.min(start.getDate(), lastOfTarget.getDate());
+
+  const result = new Date(start.getFullYear(), targetMonth, clampedDay, 0, 0, 0, 0);
+  return toISODateLocal(result);
+} 
 // put this helper once above valReq / valOpt
 function valReqAny(ids) {
   for (const id of ids) {
