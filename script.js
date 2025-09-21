@@ -686,6 +686,7 @@ async function backfillFundMeta() {
 }
 
 async function drawholdingsbyName() {
+  refreshAllNAVs(); // async, don't await
   if (!showChartContainer('MF_chart')) return;
   uiStatus('Loading chart…', 'info');
 
@@ -732,6 +733,7 @@ async function drawholdingsbyName() {
 
 
 async function drawFundGroupByHolderStacked(asPercent = false) {
+  refreshAllNAVs(); // async, don't await
   if (!showChartContainer('MF_chart')) return;
 
   uiStatus(asPercent ? 'Loading MF group % by holder…' : 'Loading MF group value by holder…', 'info');
@@ -822,6 +824,7 @@ async function drawFundGroupByHolderStacked(asPercent = false) {
 // Bar X-axis = Fund Houses; stacks show contributions by Holder→House
 // ------------------------------------------------------------
 async function drawFundGroupByHolderAndHouse(asPercent = false) {
+  refreshAllNAVs(); // async, don't await
   if (!showChartContainer('MF_chart')) return;
   uiStatus(asPercent
     ? 'Loading MF sub-category % by Holder → Fund House…'
@@ -1042,6 +1045,7 @@ function formatSignedPct(x) {
 }
 
 async function drawPerformanceTable() {
+  refreshAllNAVs(); // async, don't await
   uiStatus('Loading performance table…', 'info');
 
   // 1) Get portfolio rows (one row per transaction)
@@ -1258,6 +1262,7 @@ if (document.getElementById('performanceTableDiv')) {
 }
 
 async function drawMyPerformanceTable() {
+  refreshAllNAVs(); // async, don't await
   // 1) Fetch required columns from your portfolio table
   const { data, error } = await sb
     .from('portfolio')
