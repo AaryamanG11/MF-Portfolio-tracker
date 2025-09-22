@@ -338,7 +338,8 @@ async function addEntry(evt) {
       investment_app: investmentApp,
       nominee_name: nomineeName || null,
       bank_name: bankName || null,
-      folio_number: folioNumber || null
+      folio_number: folioNumber || null,
+      type_of_investment: 'Lump Sum'
     };
 
     console.log('Payload to insert:', payload);
