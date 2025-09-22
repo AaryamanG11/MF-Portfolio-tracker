@@ -318,6 +318,7 @@ async function addEntry(evt) {
     // Calculated fields
     const buyPrice = buyValue / units; // price per unit
     const currentValue = (currentNav != null && isFinite(currentNav)) ? currentNav * units : null;
+    const lumpSum = 'Lump Sum';
 
     // Build payload (DB column names)
     const payload = {
@@ -339,7 +340,7 @@ async function addEntry(evt) {
       nominee_name: nomineeName || null,
       bank_name: bankName || null,
       folio_number: folioNumber || null,
-      type_of_investment: 'Lump Sum'
+      type_of_investment: lumpSum
     };
 
     console.log('Payload to insert:', payload);
