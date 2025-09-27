@@ -55,15 +55,32 @@
 
     <div class="card card-elevated">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">My Performance </h5>
-        <button class="btn btn-outline-primary btn-sm" onclick="if(window.drawMyPerformanceTable){drawMyPerformanceTable()}"
+        <h5 class="mb-0">Lump sum Performance </h5>
+        <button class="btn btn-outline-primary btn-sm" onclick="if(window.drawlumpsumPerformanceTable){drawlumpsumPerformanceTable()}"
           title="Reload table">
           Reload
         </button>
       </div>
       <div class="card-body">
         <div class="plotly-scroll-x">
-          <div id="MyperformanceTableDiv" class="plotly-table-surface" style="width: 85%; margin-left: -45px; margin-right: -45px;"></div>
+          <div id="lumpsumPerformanceTableDiv" class="plotly-table-surface" style="width: 85%; margin-left: -45px; margin-right: -45px;"></div>
+        </div>
+        
+      </div>
+    </div>
+    <div id="statusArea" class="mt-3"></div>
+
+     <div class="card card-elevated">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">SIP Performance </h5>
+        <button class="btn btn-outline-primary btn-sm" onclick="if(window.SIPperformanceTable){drawSIPperformanceTable()}"
+          title="Reload table">
+          Reload
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="plotly-scroll-x">
+          <div id="SIPperformanceTableDiv" class="plotly-table-surface" style="width: 85%; margin-left: -45px; margin-right: -45px;"></div>
         </div>
         
       </div>
@@ -101,10 +118,10 @@
         console.warn('drawPerformanceTable() is not defined. Please ensure script.js includes it.');
       }
 
-      if (typeof drawMyPerformanceTable === 'function') {
-        drawMyPerformanceTable();
+      if (typeof drawSIPperformanceTable === 'function') {
+        drawSIPperformanceTable();
       } else {
-        console.warn('drawMyPerformanceTable() is not defined. Please ensure script.js includes it and renders into #MyperformanceTableDiv.');
+        console.warn('drawSIPperformanceTable() is not defined. Please ensure script.js includes it and renders into #SIPperformanceTableDiv.');
       }
     });
   </script>

@@ -558,7 +558,8 @@ async function handleAddSipPlan(evt) {
         bank_name: sipBankName || null,
         folio_number: sipFolioNumber || null,
         first_sip_date: startISO,
-        last_sip_date: startISO
+        last_sip_date: startISO,
+        type_of_investment: 'SIP'
       };
 
       const { error: initErr } = await sb.from('portfolio').insert([initialPayload]);
@@ -1273,14 +1274,16 @@ if (document.getElementById('performanceTableDiv')) {
   });
 }
 
-async function drawMyPerformanceTable() {
+async function drawlumpsumPerformanceTable() {
   refreshAllNAVs(); // async, don't await
   // 1) Fetch required columns from your portfolio table
   const { data, error } = await sb
     .from('portfolio')
-    .select('scheme_name, holder_name, units, buy_price, current_nav, buy_value, current_value, trade_date')
+    .select('scheme_name, holder_name, units, buy_price, current_nav, buy_value, current_value, trade_date',"type_of_investment")
+    .eq("type_of_investment","Lump Sum")
     .order('holder_name', { ascending: true })
-    .order('scheme_name', { ascending: true });
+    .order('scheme_name', { ascending: true })
+    .order('trade_date', { ascending: true });
 
   if (error) {
     console.error('Failed to load My Performance table:', error);
@@ -1360,7 +1363,7 @@ async function drawMyPerformanceTable() {
   };
 
   // Dynamic sizing like the main performance table
-  const containerId = 'MyperformanceTableDiv';
+  const containerId = 'SIPperformanceTableDiv';
   const container = document.getElementById(containerId);
 
   const nRows = rows.length;
@@ -1391,10 +1394,153 @@ async function drawMyPerformanceTable() {
   Plotly.newPlot(containerId, [tableTrace], layout, { responsive: true });
 }
 // Auto-run on my_performance.html if the div exists
-if (document.getElementById('MyperformanceTableDiv')) {
+if (document.getElementById('lumpsumPerformanceTableDiv')) {
   document.addEventListener('DOMContentLoaded', () => {
-    drawMyPerformanceTable().catch(err => {
+    drawSIPperformanceTable().catch(err => {
       console.error(err);
+    });
+  });
+}
+
+async function drawSIPperformanceTable() {
+  refreshAllNAVs(); // async, don't await
+  uiStatus('Loading SIP performance table…', 'info');
+
+  // 1) Fetch required columns from your portfolio table
+  const { data, error } = await sb
+    .from('portfolio')
+    .select('holder_name, scheme_name, scheme_code, units, buy_value, current_value, trade_date, source_queue_id, transaction_type, type_of_investment')
+    .eq('type_of_investment', 'SIP')
+    .eq('transaction_type', 'buy')
+    .order('holder_name', { ascending: true })
+    .order('scheme_name', { ascending: true })
+    .order('trade_date', { ascending: true });
+
+  if (error) {
+    console.error('Failed to load SIP Performance table:', error);
+    uiStatus('Failed to load SIP Performance table', 'danger');
+    return;
+  }
+
+
+  const rows = Array.isArray(data) ? data : [];
+
+  // 2) Aggregate to one row per SIP defined by (holder_name + scheme_code)
+  const keyOf = r => `${r.holder_name || ''}||${r.scheme_code || ''}`;
+  const agg = new Map();
+
+  for (const r of rows) {
+    const k = keyOf(r);
+    if (!agg.has(k)) {
+      agg.set(k, {
+        holder_name: r.holder_name || '',
+        scheme_code: r.scheme_code || '',
+        scheme_name: r.scheme_name || '',
+        total_units: 0,
+        total_buy_value: 0,
+        total_current_value: 0,
+        installments: 0,
+        first_date: r.trade_date || null,
+        last_date: r.trade_date || null
+      });
+    }
+    const a = agg.get(k);
+    a.total_units += Number(r.units) || 0;
+    a.total_buy_value += Number(r.buy_value) || 0;
+    a.total_current_value += Number(r.current_value) || 0;
+
+    // Count installments: count each BUY row; if you only want to count cron-generated rows, use (r.source_queue_id ? 1 : 0)
+    a.installments += 1;
+
+    // Track first/last trade dates
+    if (r.trade_date) {
+      if (!a.first_date || String(r.trade_date) < String(a.first_date)) a.first_date = r.trade_date;
+      if (!a.last_date  || String(r.trade_date) > String(a.last_date))  a.last_date  = r.trade_date;
+    }
+  }
+
+  // 3) Prepare columns for the table
+  const fmtNum = (x) => Number(x ?? 0);
+  const money = (x) => '₹' + fmtNum(x).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const qty = (x) => fmtNum(x).toLocaleString('en-IN', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+  const arr = Array.from(agg.values()).sort((a,b) => (a.holder_name || '').localeCompare(b.holder_name || '') || (a.scheme_name || '').localeCompare(b.scheme_name || ''));
+
+  const col_holder = arr.map(a => a.holder_name);
+  const col_scheme = arr.map(a => a.scheme_name);
+  const col_units  = arr.map(a => qty(a.total_units));
+  const col_buyVal = arr.map(a => money(a.total_buy_value));
+  const col_curVal = arr.map(a => money(a.total_current_value));
+  const col_inst   = arr.map(a => String(a.installments));
+
+  // Optional: derived P/L columns (not required but useful)
+  const col_profit = arr.map(a => money(a.total_current_value - a.total_buy_value));
+  const col_profitPct = arr.map(a => {
+    const buy = a.total_buy_value || 0;
+    if (buy <= 0) return '-';
+    const p = ((a.total_current_value - a.total_buy_value) / buy) * 100;
+    const sign = p > 0 ? '+' : (p < 0 ? '' : '');
+    return `${sign}${p.toFixed(2)}%`;
+  });
+
+  // 4) Draw Plotly table into #SIPperformanceTableDiv
+  const containerId = 'SIPperformanceTableDiv';
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.warn('SIPperformanceTableDiv not found');
+    return;
+  }
+
+  const tableTrace = {
+    type: 'table',
+    header: {
+      values: [
+        '<b>Holder</b>',
+        '<b>Scheme</b>',
+        '<b>Total Units</b>',
+        '<b>Total Buy Value</b>',
+        '<b>Total Current Value</b>',
+        '<b>Installments</b>',
+        '<b>Profit / Loss</b>',
+        '<b>Profit / Loss %</b>'
+      ],
+      align: 'center',
+      line: { width: 1, color: '#444' },
+      fill: { color: '#222' },
+      font: { family: 'Arial', size: 12, color: '#fff' }
+    },
+    cells: {
+      values: [
+        col_holder,
+        col_scheme,
+        col_units,
+        col_buyVal,
+        col_curVal,
+        col_inst,
+        col_profit,
+        col_profitPct
+      ],
+      align: 'center',
+      line: { color: '#444', width: 0.5 },
+      fill: { color: [['#111', '#151515']] },
+      font: { family: 'Arial', size: 11, color: '#eee' },
+      height: 30
+    }
+  };
+
+  const layout = { margin: { t: 16, r: 16, b: 16, l: 16 } };
+
+  Plotly.newPlot(containerId, [tableTrace], layout, { responsive: true });
+  uiStatus('SIP Performance table drawn ✅', 'success');
+}
+
+
+// Auto-run for SIP table
+if (document.getElementById('SIPperformanceTableDiv')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    drawSIPperformanceTable().catch(err => {
+      console.error(err);
+      uiStatus('Failed to draw SIP performance table', 'danger');
     });
   });
 }
