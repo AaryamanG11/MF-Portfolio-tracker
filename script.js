@@ -1418,7 +1418,6 @@ async function drawSIPperformanceTable() {
     .select('holder_name, scheme_name, scheme_code, units, buy_value, current_value, type_of_investment, transaction_type')
     .eq('type_of_investment', 'SIP')
     .eq('transaction_type', 'buy')
-    .order('holder_name', { ascending: true })
     .order('scheme_name', { ascending: true })
 
   if (error) {
