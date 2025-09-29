@@ -1362,10 +1362,6 @@ async function drawlumpsumPerformanceTable() {
     }
   };
 
-  // Dynamic sizing like the main performance table
-  const containerId = 'SIPperformanceTableDiv';
-  const container = document.getElementById(containerId);
-
   const nRows = rows.length;
   const cellH = (tableTrace.cells && tableTrace.cells.height) ? tableTrace.cells.height : 30;
   const headerH = 36; // approx header height
@@ -1410,6 +1406,7 @@ async function drawSIPperformanceTable() {
   const { data, error } = await sb
     .from('portfolio')
     .select('holder_name, scheme_name, scheme_code, units, buy_value, current_value, type_of_investment, transaction_type')
+    .eq('type_of_investment', 'SIP')
     .eq('transaction_type', 'buy')
     .order('holder_name', { ascending: true })
     .order('scheme_name', { ascending: true })
