@@ -20,19 +20,16 @@ function normalizeDateString(s) {
   // DD-Mon-YYYY (e.g., 29-May-2008)
   m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
   if (m) {
-    // DD-Mon-YYYY (e.g., 29-May-2008)
-m = str.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
-if (m) {
-  const months = { Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06',
-                   Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12' };
-  const [, dd, mon, yyyy] = m;
-  const mm = months[mon.slice(0,3)];
-  if (mm) return `${yyyy}-${mm}-${dd}`;
-}
+    const months = { Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06',
+                     Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12' };
+    const [, dd, mon, yyyy] = m;
+    const mm = months[mon.slice(0,3)];
+    if (mm) return `${yyyy}-${mm}-${dd}`;
+  }
 
   // Fallback: return original
   return str;
-}}
+}
 
 // Get visible text of selected <option>
 function getSelectedText(sel) {
@@ -49,21 +46,28 @@ function capitalizeEachWord(str) {
 }
 
 // ---------------------------------
-// UI status helper (Bootstrap alerts)
+// UI status helpers (Bootstrap alerts)
+// Generalized + per-table wrappers
 // ---------------------------------
-function uiStatus(msg, type = 'info') {
-  // type: 'info' | 'success' | 'danger' | 'warning'
-  const el = document.getElementById('statusArea');
-  if (!el) return console.log(`[${type}] ${msg}`);
-  el.innerHTML = `<div class="alert alert-${type} mb-0" role="alert">${msg}</div>`;
+// Core: write a status message into a target element id. If missing, fall back to #statusArea, else console.
+function uiStatusTo(targetId, msg, type = 'info') {
+  const el = document.getElementById(targetId);
+  const host = el || document.getElementById('statusArea');
+  const html = `<div class="alert alert-${type} mb-0" role="alert">${msg}</div>`;
+  if (host) { host.innerHTML = html; return true; }
+  console.log(`[${type}] ${msg}`);
+  return false;
 }
 
-// Secondary status helper for the second card/table
-function uiStatus2(msg, type = 'info') {
-  const el = document.getElementById('statusArea2');
-  if (!el) return console.log(`[${type}] ${msg}`);
-  el.innerHTML = `<div class="alert alert-${type} mb-0" role="alert">${msg}</div>`;
-}
+// Back-compat generic helpers
+function uiStatus(msg, type = 'info') { return uiStatusTo('statusArea', msg, type); }
+function uiStatus2(msg, type = 'info') { return uiStatusTo('statusArea2', msg, type); }
+
+// Per-table/status-area wrappers (use these in each feature)
+function uiStatusPerf(msg, type = 'info') { return uiStatusTo('statusAreaFund', msg, type); }
+function uiStatusLump(msg, type = 'info') { return uiStatusTo('statusAreaLump', msg, type); }
+function uiStatusSIP(msg, type = 'info')  { return uiStatusTo('statusAreaSIP',  msg, type); }
+function uiStatusChart(msg, type = 'info'){ return uiStatusTo('statusAreaChart', msg, type); }
 
 // ---------------------------------
 // Wrap long tick labels for Plotly
@@ -1059,7 +1063,7 @@ function formatSignedPct(x) {
 
 async function drawPerformanceTable() {
   refreshAllNAVs(); // async, don't await
-  uiStatus('Loading performance table…', 'info');
+  uiStatusPerf('Loading performance table…', 'info');
 
   // 1) Get portfolio rows (one row per transaction)
   const { data: rows, error } = await sb
@@ -1069,7 +1073,7 @@ async function drawPerformanceTable() {
 
   if (error) {
     console.error('Portfolio fetch failed', error);
-    uiStatus('Failed to load portfolio', 'danger');
+    uiStatusPerf('Failed to load portfolio', 'danger');
     return;
   }
 
@@ -1261,7 +1265,7 @@ async function drawPerformanceTable() {
   layout.autosize = false;  // explicit height/width
 
   Plotly.newPlot('performanceTableDiv', [tableTrace], layout, { responsive: true });
-  uiStatus('Performance table drawn ✅', 'success');
+  uiStatusPerf('Performance table drawn ✅', 'success');
 }
 
 // Auto-run on performance.html if the div exists
@@ -1269,27 +1273,31 @@ if (document.getElementById('performanceTableDiv')) {
   document.addEventListener('DOMContentLoaded', () => {
     drawPerformanceTable().catch(err => {
       console.error(err);
-      uiStatus('Failed to draw performance table', 'danger');
+      uiStatusPerf('Failed to draw performance table', 'danger');
     });
   });
 }
 
 async function drawlumpsumPerformanceTable() {
+  uiStatusLump('Loading Lump Sum performance…', 'info');
   refreshAllNAVs(); // async, don't await
   // 1) Fetch required columns from your portfolio table
   const { data, error } = await sb
     .from('portfolio')
-    .select('scheme_name, holder_name, units, buy_price, current_nav, buy_value, current_value, trade_date',"type_of_investment")
-    .eq("type_of_investment","Lump Sum")
+    .select('scheme_name, holder_name, units, buy_price, current_nav, buy_value, current_value, trade_date, type_of_investment')
+    .eq('type_of_investment', 'Lump Sum')
     .order('holder_name', { ascending: true })
     .order('scheme_name', { ascending: true })
     .order('trade_date', { ascending: true });
 
   if (error) {
     console.error('Failed to load My Performance table:', error);
+    uiStatusLump('Failed to load Lump Sum performance', 'danger');
     return;
   }
 
+  const containerId = 'lumpsumPerformanceTableDiv';
+  const container = document.getElementById(containerId);
   const rows = data || [];
 
   // 2) Helpers for formatting
@@ -1320,7 +1328,7 @@ async function drawlumpsumPerformanceTable() {
     return `${sign}${p.toFixed(2)}%`;
   });
 
-  // 5) Draw Plotly table into #MyperformanceTableDiv
+  // 5) Draw Plotly table into #lumpsumPerformanceTableDiv
   const tableTrace = {
     type: 'table',
     header: {
@@ -1388,19 +1396,21 @@ async function drawlumpsumPerformanceTable() {
   const layout = { margin: { t: 16, r: 16, b: 16, l: 16 }, height: desiredHeight, width: totalColumnsPx + 40, autosize: false };
 
   Plotly.newPlot(containerId, [tableTrace], layout, { responsive: true });
+  uiStatusLump('Lump Sum Performance table drawn ✅', 'success');
 }
 // Auto-run on my_performance.html if the div exists
 if (document.getElementById('lumpsumPerformanceTableDiv')) {
   document.addEventListener('DOMContentLoaded', () => {
-    drawSIPperformanceTable().catch(err => {
+    drawlumpsumPerformanceTable().catch(err => {
       console.error(err);
+      uiStatusLump('Failed to draw Lump Sum performance table', 'danger');
     });
   });
 }
 
 async function drawSIPperformanceTable() {
   refreshAllNAVs(); // async, don't await
-  uiStatus('Loading SIP performance table…', 'info');
+  uiStatusSIP('Loading SIP performance table…', 'info');
 
   // 1) Fetch required columns from your portfolio table
   const { data, error } = await sb
@@ -1413,7 +1423,7 @@ async function drawSIPperformanceTable() {
 
   if (error) {
     console.error('Failed to load SIP Performance table:', error);
-    uiStatus('Failed to load SIP Performance table', 'danger');
+    uiStatusSIP('Failed to load SIP performance table', 'danger');
     return;
   }
 
@@ -1432,7 +1442,7 @@ async function drawSIPperformanceTable() {
     agg[key].total_units += (Number(r.units) || 0);
     agg[key].total_buy_value += (Number(r.buy_value) || 0);
     agg[key].total_current_value += (Number(r.current_value) || 0);
-    agg[key].insallments += 1;
+    agg[key].installments += 1;
   }
 
   const aggregatedRows = Object.values(agg);
@@ -1500,7 +1510,7 @@ async function drawSIPperformanceTable() {
   
   const layout = { margin: { t: 16, r: 16, b: 16, l: 16 }, height: desiredHeight, width: totalColumnsPx + 40, autosize: false };
   Plotly.newPlot(containerId, [tableTrace], layout, { responsive: true });
-  uiStatus('SIP Performance table drawn ✅', 'success');
+  uiStatusSIP('SIP Performance table drawn ✅', 'success');
 }
 
 
@@ -1509,7 +1519,7 @@ if (document.getElementById('SIPperformanceTableDiv')) {
   document.addEventListener('DOMContentLoaded', () => {
     drawSIPperformanceTable().catch(err => {
       console.error(err);
-      uiStatus('Failed to draw SIP performance table', 'danger');
+      uiStatusSIP('Failed to draw SIP performance table', 'danger');
     });
   });
 }
